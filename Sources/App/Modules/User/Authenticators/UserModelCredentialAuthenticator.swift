@@ -17,7 +17,7 @@ struct UserModelCredentialsAuthenticator: CredentialsAuthenticator {
 						request.auth.login(user)
 					}
 				} catch {
-					//nothing
+					print("Error logging in user '\(credentials.email.lowercased())': \(error)")
 				}
 		}
 	}

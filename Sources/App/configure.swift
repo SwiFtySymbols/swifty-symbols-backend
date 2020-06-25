@@ -14,5 +14,11 @@ public func configure(_ app: Application) throws {
 
 	// Configure migrations
 
-	try routes(app)
+	let modules = [
+		UserModule(),
+	]
+
+	try app.viper.use(modules)
+
+	try app.autoMigrate().wait()
 }

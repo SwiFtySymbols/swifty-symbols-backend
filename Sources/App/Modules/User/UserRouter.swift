@@ -10,5 +10,6 @@ struct UserRouter: ViperRouter {
 		api.grouped(UserModelCredentialsAuthenticator())
 			.post("login", use: apiController.login)
 		api.post("sign-in-with-apple", use: apiController.signInWithApple)
+		api.post("signup", use: apiController.signUp)
 	}
 }

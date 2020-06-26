@@ -69,3 +69,11 @@ extension UserModel {
 			}
 	}
 }
+
+extension UserModel {
+	struct CreateContext: Content {
+		let email: String
+		let password: String
+		let passwordVerify: String
+	}
+}

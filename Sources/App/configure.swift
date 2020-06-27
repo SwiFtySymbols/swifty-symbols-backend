@@ -1,6 +1,7 @@
 import Fluent
 import FluentPostgresDriver
 import Vapor
+import ViperKit
 
 // Called before your application initializes.
 public func configure(_ app: Application) throws {
@@ -14,8 +15,9 @@ public func configure(_ app: Application) throws {
 
 	// Configure migrations
 
-	let modules = [
+	let modules: [ViperModule] = [
 		UserModule(),
+		SymbolModule(),
 	]
 
 	try app.viper.use(modules)

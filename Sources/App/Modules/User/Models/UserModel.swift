@@ -1,10 +1,11 @@
 import Vapor
 import Fluent
-import JWT
+import ViperKit
 
-final class UserModel: Model {
+final class UserModel: ViperModel {
+	typealias Module = UserModule
 
-	static let schema = "user_users"
+	static let name = "users"
 
 	enum FieldKeys {
 		static var email: FieldKey { "email" }

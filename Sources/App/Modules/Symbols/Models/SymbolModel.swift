@@ -1,6 +1,7 @@
 import Vapor
 import Fluent
 import ViperKit
+import ContentApi
 
 final class SymbolModel: ViperModel {
 	typealias Module = SymbolModule
@@ -42,4 +43,16 @@ final class SymbolModel: ViperModel {
 		self.availability = availability
 	}
 
+}
+
+extension SymbolModel: ListContentRepresentable {
+	var listContent: ListItem {
+		.init(name: name, restriction: restriction, availability: availability)
+	}
+
+	struct ListItem: Content {
+		let name: String
+		let restriction: String?
+		let availability: SFVersionAvailability?
+	}
 }

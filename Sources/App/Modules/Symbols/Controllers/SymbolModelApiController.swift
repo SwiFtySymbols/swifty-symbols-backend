@@ -13,16 +13,15 @@ struct SymbolModelApiController: ListContentController, GetContentController {
 				connection.with(\.$tag)
 			}
 			.first()
-			.flatMapThrowing({ model -> EventLoopFuture<Model.GetContent> in
-				guard let model = model else { throw Abort(.badRequest) }
+			.unwrap(or: Abort(.badRequest))
+			.map({ model in
 				let tags = model.$connections.value?
 					.map(\.$tag.value?.listContent)
 					.compactMap({ $0 })
 				var getContent = model.getContent
 				getContent.tags = tags
-				return req.eventLoop.future(getContent)
+				return getContent
 			})
-			.flatMap { $0 }
 	}
 
 }

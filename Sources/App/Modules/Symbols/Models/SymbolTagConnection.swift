@@ -39,7 +39,7 @@ final class SymbolTagConnection: ViperModel {
 
 	init() {}
 
-	init(id: UUID? = nil, tagID: SymbolTag.IDValue, symbolID: SymbolModel.IDValue, createdBy: UserModel.IDValue, expiration: Date? = Date().addingTimeInterval(2_592_000)) {
+	init(id: UUID = UUID(), tagID: SymbolTag.IDValue, symbolID: SymbolModel.IDValue, createdBy: UserModel.IDValue, expiration: Date? = Date().addingTimeInterval(2_592_000)) {
 		self.id = id
 		self.score = 0
 		self.$tag.id = tagID
@@ -47,5 +47,4 @@ final class SymbolTagConnection: ViperModel {
 		self.$createdBy.id = createdBy
 		self.expiration = expiration
 	}
-
 }

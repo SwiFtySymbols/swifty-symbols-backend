@@ -4,7 +4,8 @@ import PackageDescription
 let package = Package(
     name: "SwiFtySymbolsBE",
     platforms: [
-       .macOS(.v10_15),
+		.macOS(.v10_15),
+		.iOS(.v13),
     ],
     products: [
         .executable(name: "Run", targets: ["Run"]),
@@ -20,6 +21,11 @@ let package = Package(
 		.package(url: "https://github.com/binarybirds/content-api.git", from: "1.0.0"),
 		.package(url: "https://github.com/binarybirds/viper-kit.git", from: "1.0.0"),
 
+
+		// use this when committing
+//		.package(url: "https://github.com/SwiFtySymbols/swifty-symbols-shared.git", .branch("master")),
+		// use this if you need to modify shared resources locally, then remember to communicate to the rest of the team and push
+		.package(name: "swifty-symbols-shared", path: "../SwiFtySymbolsShared"),
 	],
 	targets: [
 		.target(
@@ -32,6 +38,7 @@ let package = Package(
 
 				.product(name: "ContentApi", package: "content-api"),
 				.product(name: "ViperKit", package: "viper-kit"),
+				.product(name: "SwiFtySymbolsShared", package: "swifty-symbols-shared"),
 			] ,
 			swiftSettings: [
 				// Enable better optimizations when building in Release configuration. Despite the use of

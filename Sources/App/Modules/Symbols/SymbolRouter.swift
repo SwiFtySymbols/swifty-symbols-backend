@@ -12,6 +12,10 @@ struct SymbolRouter: ViperRouter {
 			UserModel.guardMiddleware()
 		])
 
-		symbolController.setupListRoute(routes: publicApi.grouped("symbols"))
+		let publicSymbolsApi = publicApi.grouped("symbols")
+		let privateSymbolsApi = privateApi.grouped("symbols")
+
+		symbolController.setupListRoute(routes: publicSymbolsApi)
+		symbolController.setupGetRoute(routes: publicSymbolsApi)
 	}
 }

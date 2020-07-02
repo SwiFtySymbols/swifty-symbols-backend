@@ -23,9 +23,9 @@ let package = Package(
 
 
 		// use this when committing
-//		.package(url: "https://github.com/SwiFtySymbols/swifty-symbols-shared.git", .branch("master")),
+		.package(url: "https://github.com/SwiFtySymbols/swifty-symbols-shared.git", .branch("master")),
 		// use this if you need to modify shared resources locally, then remember to communicate to the rest of the team and push
-		.package(name: "swifty-symbols-shared", path: "../SwiFtySymbolsShared"),
+//		.package(name: "swifty-symbols-shared", path: "../SwiFtySymbolsShared"),
 	],
 	targets: [
 		.target(

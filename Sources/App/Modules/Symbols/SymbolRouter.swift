@@ -4,6 +4,7 @@ import ViperKit
 struct SymbolRouter: ViperRouter {
 	
 	let symbolController = SymbolModelApiController()
+	let connectionController = SymbolConnectionController()
 	
 	func boot(routes: RoutesBuilder, app: Application) throws {
 		let publicApi = routes.grouped("api")
@@ -17,5 +18,7 @@ struct SymbolRouter: ViperRouter {
 
 		symbolController.setupListRoute(routes: publicSymbolsApi)
 		symbolController.setupGetRoute(routes: publicSymbolsApi)
+
+		privateSymbolsApi.post("createTag", use: connectionController.connectTag)
 	}
 }

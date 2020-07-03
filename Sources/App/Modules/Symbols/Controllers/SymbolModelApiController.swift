@@ -7,8 +7,12 @@ struct SymbolModelApiController: ListContentController, GetContentController {
 
 	func get(_ req: Request) throws -> EventLoopFuture<Model.GetContent> {
 		let id = UUID(uuidString: req.parameters.get("id") ?? "") ?? UUID()
+		return try get(id, on: req)
+	}
+
+	func get(_ symbolID: UUID, on req: Request) throws -> EventLoopFuture<Model.GetContent> {
 		return SymbolModel.query(on: req.db)
-			.filter(\.$id == id)
+			.filter(\.$id == symbolID)
 			.with(\.$connections) { connection in
 				connection.with(\.$tag)
 			}
@@ -23,5 +27,4 @@ struct SymbolModelApiController: ListContentController, GetContentController {
 				return getContent
 			})
 	}
-
 }

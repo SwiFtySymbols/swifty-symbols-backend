@@ -209,6 +209,15 @@
         }
       },
       {
+        "package": "swifty-symbols-shared",
+        "repositoryURL": "https://github.com/SwiFtySymbols/swifty-symbols-shared.git",
+        "state": {
+          "branch": "master",
+          "revision": "488a668615fbf1726b2210edad1ed9a25b7b9a7b",
+          "version": null
+        }
+      },
+      {
         "package": "vapor",
         "repositoryURL": "https://github.com/vapor/vapor.git",
         "state": {

@@ -10,6 +10,22 @@ struct SymbolConnectionController {
 			.first()
 	}
 
+	/// Retrieves existing tag from database if it exists, creating it if it doesnt.
+	func getCreateTag(named value: String, request: Request) -> EventLoopFuture<SymbolTag> {
+		return SymbolTag.query(on: request.db)
+			.filter(\.$value == value)
+			.first()
+			.flatMap { optTag -> EventLoopFuture<SymbolTag> in
+				if let tag = optTag {
+					return request.eventLoop.future(tag)
+				} else {
+					let tag = SymbolTag(value: value)
+					return tag.create(on: request.db)
+						.transform(to: tag)
+				}
+			}
+	}
+
 	func connectTag(_ req: Request) throws -> EventLoopFuture<SymbolModel.GetContent> {
 		struct ConnectRequest: Content {
 			let symbolID: UUID
@@ -26,18 +42,7 @@ struct SymbolConnectionController {
 			.unwrap(or: Abort(.badRequest))
 
 		return symbol.flatMap { symbol -> EventLoopFuture<SymbolModel.GetContent> in
-			let tag = SymbolTag.query(on: req.db)
-				.filter(\.$value == connectReference.tagValue)
-				.first()
-				.flatMap { optTag -> EventLoopFuture<SymbolTag> in
-					if let tag = optTag {
-						return req.eventLoop.future(tag)
-					} else {
-						let tag = SymbolTag(value: connectReference.tagValue)
-						return tag.create(on: req.db)
-							.transform(to: tag)
-					}
-				}
+			let tag = getCreateTag(named: connectReference.tagValue, request: req)
 
 			let connection = tag.flatMap { tag -> EventLoopFuture<SymbolTagConnection?> in
 				return getConnectionBetween(
@@ -46,11 +51,9 @@ struct SymbolConnectionController {
 					req: req)
 			}
 			.flatMap { optConnection -> EventLoopFuture<SymbolTagConnection> in
-				if let connection = optConnection {
-					// FIXME: vulnerable to manipulation. use unique recommended by to check if
-					connection.score += 1
-					return connection.update(on: req.db)
-						.transform(to: connection)
+				// this is explicitly to create a connection. if one already exists, abort
+				if optConnection != nil {
+					return req.eventLoop.future(error: Abort(.conflict))
 				} else {
 					//create connection
 					return tag.flatMap { tag -> EventLoopFuture<SymbolTagConnection> in

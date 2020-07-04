@@ -19,6 +19,6 @@ struct SymbolRouter: ViperRouter {
 		symbolController.setupListRoute(routes: publicSymbolsApi)
 		symbolController.setupGetRoute(routes: publicSymbolsApi)
 
-		privateSymbolsApi.post("createTag", use: connectionController.connectTag)
+		privateSymbolsApi.post("tag", use: connectionController.connectTag)
 	}
 }

@@ -16,6 +16,7 @@ final class SymbolTag: ViperModel {
 	@ID()
 	var id: UUID?
 
+	/// Remember to store all lowercase values
 	@Field(key: FieldKeys.value)
 	var value: String
 
@@ -27,7 +28,7 @@ final class SymbolTag: ViperModel {
 
 	init(id: UUID = UUID(), value: String) {
 		self.id = id
-		self.value = value
+		self.value = value.lowercased()
 	}
 }
 
@@ -52,3 +53,11 @@ extension SymbolTag: GetContentRepresentable {
 
 extension SFSymbolTagListObject: Content {}
 extension SFSymbolTagGetObject: Content {}
+
+extension SFTagSymbolRequest: Content {
+	/// Returns true when valid
+	func validate() -> Bool {
+		tagValue == tagValue.lowercased() &&
+			!tagValue.contains(" ")
+	}
+}

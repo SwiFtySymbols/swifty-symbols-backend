@@ -40,6 +40,10 @@ struct SymbolConnectionController {
 
 		let connectReference = try req.content.decode(SFTagSymbolRequest.self)
 
+		guard connectReference.validate() else {
+			throw Abort(.badRequest)
+		}
+
 		let symbol = SymbolModel.query(on: req.db)
 			.filter(\.$id == connectReference.symbolID)
 			.first()
@@ -86,5 +90,3 @@ struct SymbolConnectionController {
 		}
 	}
 }
-
-extension SFTagSymbolRequest: Content {}

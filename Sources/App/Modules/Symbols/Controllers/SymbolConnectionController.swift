@@ -3,6 +3,7 @@ import Fluent
 import SwiFtySymbolsShared
 
 struct SymbolConnectionController {
+	static let searchQueryParameter = "searchQuery"
 
 	func getConnectionBetween(symbolID: UUID, andTagID tagID: UUID, request: Request) -> EventLoopFuture<SymbolTagConnection?> {
 		return SymbolTagConnection.query(on: request.db)
@@ -88,5 +89,97 @@ struct SymbolConnectionController {
 				}
 			}
 		}
+	}
+
+	func search(_ req: Request) throws -> EventLoopFuture<[SFSymbolResultObject]> {
+		guard let query = req.query[String.self, at: Self.searchQueryParameter] else {
+			throw Abort(.badRequest)
+		}
+
+		let terms = query
+			.trimmingCharacters(in: .whitespacesAndNewlines)
+			.lowercased()
+			.split(separator: " ")
+			.map { String($0) }
+
+		struct SearchScore: Hashable {
+			let tag: SymbolModel
+			let score: Int
+		}
+
+		typealias SymbolScore = [SymbolModel: Double]
+
+		func queryFirstTerm(in terms: [String], combined: EventLoopFuture<SymbolScore>) -> EventLoopFuture<SymbolScore> {
+			guard let firstItem = terms.first else { return combined }
+
+			let tagMatch = SymbolTag.query(on: req.db)
+				.filter(\.$value ~~ firstItem)
+				.with(\.$connections) { connection in
+					connection.with(\.$symbol)
+				}
+				.all()
+
+			let termCount = Double(firstItem.count)
+			return combined.flatMap { (combinedDict: SymbolScore) -> EventLoopFuture<SymbolScore> in
+				tagMatch.map { (tags: [SymbolTag]) -> SymbolScore in
+					var newCombined = combinedDict
+					for tag in tags {
+						let score = termCount / Double(tag.value.count)
+						let symbols = tag.connections.map(\.symbol)
+						for symbol in symbols {
+							newCombined[symbol, default: 0] += score
+						}
+					}
+					return newCombined
+				}
+			}
+		}
+
+		let combinedStarter = req.eventLoop.future(SymbolScore())
+		let scores = queryFirstTerm(in: terms, combined: combinedStarter)
+
+		return scores.map { scores -> [SFSymbolResultObject] in
+			var results: [SFSymbolResultObject] = []
+			for (symbol, score) in scores {
+				let result = SFSymbolResultObject(id: symbol.id!, value: symbol.name, availability: symbol.availability, resultScore: score)
+				results.append(result)
+			}
+			return results.sorted { $0.resultScore > $1.resultScore }
+		}
+
+
+
+//		guard let firstTerm = terms.first else {
+//			return req.eventLoop.future([])
+//		}
+//
+//		let tagMatch = SymbolTag.query(on: req.db)
+//			.filter(\.$value ~~ firstTerm)
+////			.with(\.$connections) { connection in
+////				connection.with(\.$symbol)
+////			}
+//			.all()
+
+//		let matchingTags = tagMatch.map { tags -> [SymbolTag] in
+//			guard terms.count > 1 else { return tags }
+//
+//			let filtered = tags.filter {
+//				return $0.value.contains(<#T##element: Character##Character#>)
+//			}
+//			for term in terms[1...] {
+//
+//			}
+//
+//			return tags
+//		}
+
+
+
+
+
+
+		// temp
+//		let item = SymbolModel.ListItem(id: UUID(), value: "fart", availability: .one)
+//		return req.eventLoop.future([item])
 	}
 }

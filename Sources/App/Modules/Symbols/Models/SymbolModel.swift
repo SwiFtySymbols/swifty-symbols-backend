@@ -40,6 +40,16 @@ final class SymbolModel: ViperModel {
 	}
 }
 
+extension SymbolModel: Hashable {
+	static func == (lhs: SymbolModel, rhs: SymbolModel) -> Bool {
+		lhs.id == rhs.id
+	}
+
+	func hash(into hasher: inout Hasher) {
+		hasher.combine(id)
+	}
+}
+
 extension SymbolModel: ListContentRepresentable {
 	var listContent: ListItem {
 		.init(id: id!, value: name, availability: availability)
@@ -58,3 +68,4 @@ extension SymbolModel: GetContentRepresentable {
 
 extension SFSymbolListObject: Content {}
 extension SFSymbolGetObject: Content {}
+extension SFSymbolResultObject: Content {}

@@ -1,5 +1,6 @@
 import Vapor
 import Fluent
+import SwiFtySymbolsShared
 
 struct SymbolConnectionController {
 
@@ -35,14 +36,9 @@ struct SymbolConnectionController {
 	}
 
 	func connectTag(_ req: Request) throws -> EventLoopFuture<SymbolModel.GetContent> {
-		struct ConnectRequest: Content {
-			let symbolID: UUID
-			let tagValue: String
-		}
-
 		let user = try req.auth.require(UserModel.self)
 
-		let connectReference = try req.content.decode(ConnectRequest.self)
+		let connectReference = try req.content.decode(SFTagSymbolRequest.self)
 
 		let symbol = SymbolModel.query(on: req.db)
 			.filter(\.$id == connectReference.symbolID)
@@ -90,3 +86,5 @@ struct SymbolConnectionController {
 		}
 	}
 }
+
+extension SFTagSymbolRequest: Content {}

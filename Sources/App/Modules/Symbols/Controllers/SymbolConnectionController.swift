@@ -117,6 +117,7 @@ struct SymbolConnectionController {
 				.with(\.$connections) { connection in
 					connection.with(\.$symbol)
 				}
+				.limit(256)
 				.all()
 
 			let termCount = Double(firstItem.count)

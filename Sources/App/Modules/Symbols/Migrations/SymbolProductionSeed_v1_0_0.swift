@@ -8,6 +8,8 @@ struct SymbolProductionSeed_v1_0_0: Migration {
 	struct SymbolSeedValue: Codable {
 		let name: String
 		let sfVersionAvailability: SFVersionAvailability
+		let localizations: [SFSymbolLocalizationOptions]
+		let deprecatedNames: [String]
 	}
 
 	let seedLoader: () throws -> [SymbolSeedValue]
@@ -17,16 +19,19 @@ struct SymbolProductionSeed_v1_0_0: Migration {
 
 		let user = UserModel.query(on: database)
 			.first()
+			.unwrap(or: Abort(.badRequest))
 
 		let futures: [EventLoopFuture<Void>] = symbolSeeds.map { importSymbol in
-			let newSymbol = SymbolModel(name: importSymbol.name, availability: importSymbol.sfVersionAvailability)
+			let newSymbol = SymbolModel(name: importSymbol.name,
+										availability: importSymbol.sfVersionAvailability,
+										deprecatedNames: importSymbol.deprecatedNames,
+										localizationOptions: importSymbol.localizations)
 			let newTag = SymbolTag(value: importSymbol.name)
 
 			return newSymbol.create(on: database).flatMap { _ in
 				newTag.create(on: database).flatMap { _ in
 					user.flatMap {
-						guard let userModel = $0 else { return database.eventLoop.future() }
-						let connection = SymbolTagConnection(tagID: newTag.id!, symbolID: newSymbol.id!, createdBy: userModel.id!)
+						let connection = SymbolTagConnection(tagID: newTag.id!, symbolID: newSymbol.id!, createdBy: $0.id!, expiration: nil)
 						return connection.create(on: database)
 					}
 				}

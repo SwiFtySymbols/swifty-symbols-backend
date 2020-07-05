@@ -13,6 +13,8 @@ final class SymbolModel: ViperModel {
 		static var name: FieldKey { "name" }
 		static var restriction: FieldKey { "restriction" }
 		static var availability: FieldKey { "availability" }
+		static var deprecatedNames: FieldKey { "deprecatedNames" }
+		static var localizationOptions: FieldKey { "localizationOptions" }
 	}
 
 	@ID()
@@ -30,13 +32,21 @@ final class SymbolModel: ViperModel {
 	@Field(key: FieldKeys.availability)
 	var availability: SFVersionAvailability
 
+	@Field(key: FieldKeys.deprecatedNames)
+	var deprecatedNames: [String]
+
+	@Field(key: FieldKeys.localizationOptions)
+	var localizationOptions: [SFSymbolLocalizationOptions]
+
 	init() {}
 
-	init(id: UUID = UUID(), name: String, restriction: String? = nil, availability: SFVersionAvailability) {
+	init(id: UUID = UUID(), name: String, restriction: String? = nil, availability: SFVersionAvailability, deprecatedNames: [String] = [], localizationOptions: [SFSymbolLocalizationOptions] = []) {
 		self.id = id
 		self.name = name
 		self.restriction = restriction
 		self.availability = availability
+		self.deprecatedNames = deprecatedNames
+		self.localizationOptions = localizationOptions
 	}
 }
 

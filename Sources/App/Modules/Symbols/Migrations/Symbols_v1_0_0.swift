@@ -16,6 +16,8 @@ struct Symbols_v1_0_0: Migration {
 			.field(SymbolModel.FieldKeys.name, .string, .required)
 			.field(SymbolModel.FieldKeys.restriction, .string)
 			.field(SymbolModel.FieldKeys.availability, .int, .required)
+			.field(SymbolModel.FieldKeys.deprecatedNames, .array(of: .string), .required)
+			.field(SymbolModel.FieldKeys.localizationOptions, .array(of: .string), .required)
 			.unique(on: SymbolModel.FieldKeys.name)
 			.create(),
 

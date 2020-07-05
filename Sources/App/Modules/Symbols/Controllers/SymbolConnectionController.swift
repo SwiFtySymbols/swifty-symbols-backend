@@ -5,32 +5,32 @@ import SwiFtySymbolsShared
 struct SymbolConnectionController {
 	static let searchQueryParameter = "searchQuery"
 
-	func getConnectionBetween(symbolID: UUID, andTagID tagID: UUID, request: Request) -> EventLoopFuture<SymbolTagConnection?> {
-		return SymbolTagConnection.query(on: request.db)
+	func getConnectionBetween(symbolID: UUID, andTagID tagID: UUID, database: Database) -> EventLoopFuture<SymbolTagConnection?> {
+		return SymbolTagConnection.query(on: database)
 			.filter(\.$symbol.$id == symbolID)
 			.filter(\.$tag.$id == tagID)
 			.first()
 	}
 
-	func getConnectionBetween(symbol: EventLoopFuture<SymbolModel>, andTag tag: EventLoopFuture<SymbolTag>, request: Request) -> EventLoopFuture<SymbolTagConnection?> {
+	func getConnectionBetween(symbol: EventLoopFuture<SymbolModel>, andTag tag: EventLoopFuture<SymbolTag>, database: Database) -> EventLoopFuture<SymbolTagConnection?> {
 		return symbol.flatMap { symbolModel in
 			return tag.flatMap { tagModel in
-				return self.getConnectionBetween(symbolID: symbolModel.id!, andTagID: tagModel.id!, request: request)
+				return self.getConnectionBetween(symbolID: symbolModel.id!, andTagID: tagModel.id!, database: database)
 			}
 		}
 	}
 
 	/// Retrieves existing tag from database if it exists, creating it if it doesnt.
-	func getCreateTag(named value: String, request: Request) -> EventLoopFuture<SymbolTag> {
-		return SymbolTag.query(on: request.db)
+	func getCreateTag(named value: String, database: Database) -> EventLoopFuture<SymbolTag> {
+		return SymbolTag.query(on: database)
 			.filter(\.$value == value)
 			.first()
 			.flatMap { optTag -> EventLoopFuture<SymbolTag> in
 				if let tag = optTag {
-					return request.eventLoop.future(tag)
+					return database.eventLoop.future(tag)
 				} else {
 					let tag = SymbolTag(value: value)
-					return tag.create(on: request.db)
+					return tag.create(on: database)
 						.transform(to: tag)
 				}
 			}
@@ -50,9 +50,9 @@ struct SymbolConnectionController {
 			.first()
 			.unwrap(or: Abort(.badRequest))
 
-		let tag = getCreateTag(named: connectReference.tagValue, request: req)
+		let tag = getCreateTag(named: connectReference.tagValue, database: req.db)
 
-		let connection = getConnectionBetween(symbol: symbol, andTag: tag, request: req)
+		let connection = getConnectionBetween(symbol: symbol, andTag: tag, database: req.db)
 			.flatMap { optConnection -> EventLoopFuture<SymbolTagConnection> in
 				// this is explicitly to CREATE a connection. if one already exists, abort
 				guard optConnection == nil else {

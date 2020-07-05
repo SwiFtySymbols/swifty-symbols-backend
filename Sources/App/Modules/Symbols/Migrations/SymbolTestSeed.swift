@@ -26,20 +26,6 @@ struct SymbolTestSeed_v1_0_0: Migration {
 						}
 					}
 			}
-
-//		return [testSymbol, testTag].flatMap {
-//			($0 as? ViperModel)?.create(on: database)
-//		}.flatMap { _ in
-//			let user = UserModel.query(on: database)
-//				.first()
-//			return user.flatMap {
-//				guard let userModel = $0 else { return database.eventLoop.future() }
-//				let connection = SymbolTagConnection(tagID: testTag.id!, symbolID: testSymbol.id!, createdBy: userModel.id)
-//				connection.create(on: database)
-//				return database.eventLoop.future()
-//			}
-//		}
-
 	}
 
 	func revert(on database: Database) -> EventLoopFuture<Void> {

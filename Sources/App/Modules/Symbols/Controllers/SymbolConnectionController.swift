@@ -15,7 +15,7 @@ struct SymbolConnectionController {
 	func getConnectionBetween(symbol: EventLoopFuture<SymbolModel>, andTag tag: EventLoopFuture<SymbolTag>, request: Request) -> EventLoopFuture<SymbolTagConnection?> {
 		return symbol.flatMap { symbolModel in
 			return tag.flatMap { tagModel in
-				return getConnectionBetween(symbolID: symbolModel.id!, andTagID: tagModel.id!, request: request)
+				return self.getConnectionBetween(symbolID: symbolModel.id!, andTagID: tagModel.id!, request: request)
 			}
 		}
 	}
@@ -146,40 +146,5 @@ struct SymbolConnectionController {
 			}
 			return results.sorted { $0.resultScore > $1.resultScore }
 		}
-
-
-
-//		guard let firstTerm = terms.first else {
-//			return req.eventLoop.future([])
-//		}
-//
-//		let tagMatch = SymbolTag.query(on: req.db)
-//			.filter(\.$value ~~ firstTerm)
-////			.with(\.$connections) { connection in
-////				connection.with(\.$symbol)
-////			}
-//			.all()
-
-//		let matchingTags = tagMatch.map { tags -> [SymbolTag] in
-//			guard terms.count > 1 else { return tags }
-//
-//			let filtered = tags.filter {
-//				return $0.value.contains(<#T##element: Character##Character#>)
-//			}
-//			for term in terms[1...] {
-//
-//			}
-//
-//			return tags
-//		}
-
-
-
-
-
-
-		// temp
-//		let item = SymbolModel.ListItem(id: UUID(), value: "fart", availability: .one)
-//		return req.eventLoop.future([item])
 	}
 }

@@ -15,9 +15,17 @@ public func configure(_ app: Application) throws {
 
 	// Configure migrations
 
+	let symbolJsonSource = URL(fileURLWithPath: app.directory.workingDirectory)
+		.appendingPathComponent("Support")
+		.appendingPathComponent("symbollist")
+		.appendingPathExtension("json")
+
 	let modules: [ViperModule] = [
 		UserModule(),
-		SymbolModule(),
+		SymbolModule(seedLoader: {
+			let data = try Data(contentsOf: symbolJsonSource)
+			return try JSONDecoder().decode([SymbolProductionSeed_v1_0_0.SymbolSeedValue].self, from: data)
+		}),
 	]
 
 	try app.viper.use(modules)

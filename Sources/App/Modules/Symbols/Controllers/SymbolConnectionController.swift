@@ -102,8 +102,8 @@ struct SymbolConnectionController {
 	func createConnectionBetween(symbolID: UUID, andTagID tagID: UUID, createdByID: UUID, expiration: Date? = nil, on database: Database) -> EventLoopFuture<SymbolTagConnection> {
 		let checkIfSymbolExists = getSymbol(id: symbolID, database: database)
 		return checkIfSymbolExists.flatMap { _ -> EventLoopFuture<SymbolTagConnection> in
-			return getTag(id: tagID, database: database).flatMap { _ -> EventLoopFuture<SymbolTagConnection> in
-				let checkExisting = getConnectionBetween(symbolID: symbolID, andTagID: tagID, database: database)
+			return self.getTag(id: tagID, database: database).flatMap { _ -> EventLoopFuture<SymbolTagConnection> in
+				let checkExisting = self.getConnectionBetween(symbolID: symbolID, andTagID: tagID, database: database)
 				return checkExisting.flatMap { optConnection -> EventLoopFuture<SymbolTagConnection> in
 					guard optConnection == nil else {
 						return database.eventLoop.future(error: Abort(.badRequest, reason: "Connection already exists. Use existing connection."))
@@ -159,7 +159,7 @@ struct SymbolConnectionController {
 		let connection = createConnectionBetween(symbol: symbol, andTag: tag, createdBy: userFuture, database: req.db)
 
 		return connection.flatMap { _ -> EventLoopFuture<SymbolModel.GetContent> in
-			let test = loadSymbolContent(on: symbol, database: req.db)
+			let test = self.loadSymbolContent(on: symbol, database: req.db)
 				.map { model -> SymbolModel.GetContent in
 					let tags = model.connections.map(\.tag.listContent)
 					var getContent = model.getContent

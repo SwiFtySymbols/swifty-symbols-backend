@@ -8,6 +8,7 @@ public func configure(_ app: Application) throws {
 	// Serves files from `Public/` directory
 	// app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
 
+	print("starting...")
 	try app.databases.use(.postgres(url: Environment.databaseURL), as: .psql)
 
 	// Configure SQLite database
@@ -30,5 +31,6 @@ public func configure(_ app: Application) throws {
 
 	try app.viper.use(modules)
 
+	print("migrating...")
 	try app.autoMigrate().wait()
 }

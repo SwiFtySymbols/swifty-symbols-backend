@@ -190,18 +190,19 @@ struct SymbolConnectionController {
 		typealias SymbolScore = [SymbolModel: Double]
 
 		func queryFirstTerm(in terms: [String], combined: EventLoopFuture<SymbolScore>) -> EventLoopFuture<SymbolScore> {
-			guard let firstItem = terms.first else { return combined }
+			var terms = terms
+			guard let searchTerm = terms.popLast() else { return combined }
 
 			let tagMatch = SymbolTag.query(on: req.db)
-				.filter(\.$value ~~ firstItem)
+				.filter(\.$value ~~ searchTerm)
 				.with(\.$connections) { connection in
 					connection.with(\.$symbol)
 				}
 				.limit(256)
 				.all()
 
-			let termCount = Double(firstItem.count)
-			return combined.flatMap { (combinedDict: SymbolScore) -> EventLoopFuture<SymbolScore> in
+			let termCount = Double(searchTerm.count)
+			let accumulator = combined.flatMap { (combinedDict: SymbolScore) -> EventLoopFuture<SymbolScore> in
 				tagMatch.map { (tags: [SymbolTag]) -> SymbolScore in
 					var newCombined = combinedDict
 					for tag in tags {
@@ -214,6 +215,8 @@ struct SymbolConnectionController {
 					return newCombined
 				}
 			}
+
+			return queryFirstTerm(in: terms, combined: accumulator)
 		}
 
 		let combinedStarter = req.eventLoop.future(SymbolScore())

@@ -14,6 +14,8 @@ struct SymbolProductionSeed_v1_0_0: Migration {
 
 	let seedLoader: () throws -> [SymbolSeedValue]
 
+	let connectionController = SymbolConnectionController()
+
 	func prepare(on database: Database) -> EventLoopFuture<Void> {
 		let symbolSeeds = try! seedLoader()
 
@@ -22,19 +24,26 @@ struct SymbolProductionSeed_v1_0_0: Migration {
 			.unwrap(or: Abort(.badRequest))
 
 		let futures: [EventLoopFuture<Void>] = symbolSeeds.map { importSymbol in
-			let newSymbol = SymbolModel(name: importSymbol.name,
-										availability: importSymbol.sfVersionAvailability,
-										deprecatedNames: importSymbol.deprecatedNames,
-										localizationOptions: importSymbol.localizations)
-			let newTag = SymbolTag(value: importSymbol.name)
+			let symbol = connectionController.createSymbol(named: importSymbol.name,
+														   restriction: nil,
+														   availability: importSymbol.sfVersionAvailability,
+														   deprecatedNames: importSymbol.deprecatedNames,
+														   localizationOptions: importSymbol.localizations,
+														   database: database)
 
-			return newSymbol.create(on: database).flatMap { _ in
-				newTag.create(on: database).flatMap { _ in
-					user.flatMap {
-						let connection = SymbolTagConnection(tagID: newTag.id!, symbolID: newSymbol.id!, createdBy: $0.id!, expiration: nil)
-						return connection.create(on: database)
-					}
-				}
+			let depTags = importSymbol.deprecatedNames.map {
+				connectionController.createTag(withValue: $0, database: database)
+			}
+			let baseTag = connectionController.createTag(withValue: importSymbol.name, database: database)
+
+			let allTags = depTags + [baseTag]
+
+			let connFutures = allTags.map { connectionController.createConnectionBetween(symbol: symbol, andTag: $0, createdBy: user, database: database) }
+
+			let flat = database.eventLoop.flatten(connFutures)
+
+			return flat.flatMapAlways { _ -> EventLoopFuture<Void> in
+				return database.eventLoop.future()
 			}
 		}
 

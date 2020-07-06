@@ -5,6 +5,99 @@ import SwiFtySymbolsShared
 struct SymbolConnectionController {
 	static let searchQueryParameter = "searchQuery"
 
+	// MARK: - Symbols
+	func createSymbol(named name: String,
+					  restriction: String?,
+					  availability: SFVersionAvailability,
+					  deprecatedNames: [String],
+					  localizationOptions: [SFSymbolLocalizationOptions],
+					  database: Database) -> EventLoopFuture<SymbolModel> {
+
+		let existingSymbol = getSymbol(named: name, database: database)
+
+		return existingSymbol.flatMap { optModel -> EventLoopFuture<SymbolModel> in
+			guard optModel == nil else {
+				return database.eventLoop.future(error: Abort(.badRequest, reason: "A Symbol with that name already exists."))
+			}
+			let symbol = SymbolModel(name: name,
+									 restriction: restriction,
+									 availability: availability,
+									 deprecatedNames: deprecatedNames,
+									 localizationOptions: localizationOptions)
+
+			return symbol.create(on: database)
+				.transform(to: symbol)
+		}
+	}
+
+	func getSymbol(id: UUID, database: Database) -> EventLoopFuture<SymbolModel> {
+		SymbolModel.query(on: database)
+			.filter(\.$id == id)
+			.first()
+			.unwrap(or: Abort(.badRequest, reason: "Symbol with requested ID doesn't exist in database"))
+	}
+
+	func getSymbol(named name: String, database: Database) -> EventLoopFuture<SymbolModel?> {
+		SymbolModel.query(on: database)
+			.filter(\.$name == name)
+			.first()
+	}
+
+	// MARK: - Tags
+	func createTag(withValue value: String, database: Database) -> EventLoopFuture<SymbolTag> {
+		let existingTag = getTag(withValue: value, database: database)
+		return existingTag.flatMap { optTag -> EventLoopFuture<SymbolTag> in
+			guard optTag == nil else {
+				return database.eventLoop.future(error: Abort(.badRequest, reason: "A Tag with that value already exists."))
+			}
+			let tag = SymbolTag(value: value)
+			return tag.create(on: database)
+				.transform(to: tag)
+		}
+	}
+
+	func getTag(id: UUID, database: Database) -> EventLoopFuture<SymbolTag> {
+		SymbolTag.query(on: database)
+			.filter(\.$id == id)
+			.first()
+			.unwrap(or: Abort(.badRequest, reason: "Tag with requested ID doesn't exist in database"))
+	}
+
+	func getTag(withValue value: String, database: Database) -> EventLoopFuture<SymbolTag?> {
+		SymbolTag.query(on: database)
+			.filter(\.$value == value)
+			.first()
+	}
+
+	// MARK: - Connections
+	func createConnectionBetween(symbolID: UUID, andTagID tagID: UUID, createdByID: UUID, expiration: Date? = nil, on database: Database) -> EventLoopFuture<SymbolTagConnection> {
+		let checkIfSymbolExists = getSymbol(id: symbolID, database: database)
+		return checkIfSymbolExists.flatMap { _ -> EventLoopFuture<SymbolTagConnection> in
+			return getTag(id: tagID, database: database).flatMap { _ -> EventLoopFuture<SymbolTagConnection> in
+				let checkExisting = getConnectionBetween(symbolID: symbolID, andTagID: tagID, database: database)
+				return checkExisting.flatMap { optConnection -> EventLoopFuture<SymbolTagConnection> in
+					guard optConnection == nil else {
+						return database.eventLoop.future(error: Abort(.badRequest, reason: "Connection already exists. Use existing connection."))
+					}
+
+					let connection = SymbolTagConnection(tagID: tagID, symbolID: symbolID, createdBy: createdByID, expiration: expiration)
+					return connection.create(on: database)
+						.transform(to: connection)
+				}
+			}
+		}
+	}
+
+	func createConnectionBetween(symbol: EventLoopFuture<SymbolModel>, andTag tag: EventLoopFuture<SymbolTag>, createdBy creator: EventLoopFuture<UserModel>, expiration: Date? = nil, database: Database) -> EventLoopFuture<SymbolTagConnection> {
+		creator.flatMap { creator in
+			symbol.flatMap { symbolModel in
+				tag.flatMap { tagModel in
+					self.createConnectionBetween(symbolID: symbolModel.id!, andTagID: tagModel.id!, createdByID: creator.id!, expiration: expiration, on: database)
+				}
+			}
+		}
+	}
+
 	func getConnectionBetween(symbolID: UUID, andTagID tagID: UUID, database: Database) -> EventLoopFuture<SymbolTagConnection?> {
 		return SymbolTagConnection.query(on: database)
 			.filter(\.$symbol.$id == symbolID)

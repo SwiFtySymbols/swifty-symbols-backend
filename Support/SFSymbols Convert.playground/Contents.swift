@@ -83,8 +83,14 @@ let symbolDictionary: [String: SFSymbol] = (symbolExtraction as? [String: String
 
 	}) ?? [:]
 
+let cleanSymbolDictionary = deprecatedNames.reduce(into: symbolDictionary) {
+	for deprecatedName in $1.value {
+		$0[deprecatedName] = nil
+	}
+}
 
-let symbolList = symbolDictionary.map(\.value)
+
+let symbolList = cleanSymbolDictionary.map(\.value)
 
 
 let jsonEncoder = JSONEncoder()

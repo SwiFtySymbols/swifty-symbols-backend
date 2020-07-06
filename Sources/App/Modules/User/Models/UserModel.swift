@@ -1,6 +1,7 @@
 import Vapor
 import Fluent
 import ViperKit
+import SwiFtySymbolsShared
 
 final class UserModel: ViperModel {
 	static let systemUsername = "system"
@@ -80,9 +81,7 @@ extension UserModel {
 }
 
 extension UserModel {
-	struct CreateContext: Content {
-		let email: String
-		let password: String
-		let passwordVerify: String
-	}
+	typealias CreateContext = UserCreateContext
 }
+
+extension UserCreateContext: Content {}

@@ -43,6 +43,21 @@ struct SymbolConnectionController {
 			.first()
 	}
 
+	func loadSymbolContent(on symbol: EventLoopFuture<SymbolModel>, database: Database) -> EventLoopFuture<SymbolModel> {
+		symbol.flatMap { symbolModel -> EventLoopFuture<SymbolModel> in
+			symbolModel
+				.$connections
+				.load(on: database)
+				.flatMap { _ -> EventLoopFuture<Void> in
+					let tagLoads = symbolModel.connections.map { connection in
+						connection.$tag.load(on: database)
+					}
+					return database.eventLoop.flatten(tagLoads)
+				}
+				.transform(to: symbolModel)
+		}
+	}
+
 	// MARK: - Tags
 	func createTag(withValue value: String, database: Database) -> EventLoopFuture<SymbolTag> {
 		let existingTag = getTag(withValue: value, database: database)
@@ -54,6 +69,20 @@ struct SymbolConnectionController {
 			return tag.create(on: database)
 				.transform(to: tag)
 		}
+	}
+
+	/// Retrieves existing tag from database if it exists, creating it if it doesnt.
+	func getCreateTag(named value: String, database: Database) -> EventLoopFuture<SymbolTag> {
+		getTag(withValue: value, database: database)
+			.flatMap { optTag -> EventLoopFuture<SymbolTag> in
+				if let tag = optTag {
+					return database.eventLoop.future(tag)
+				} else {
+					let tag = SymbolTag(value: value)
+					return tag.create(on: database)
+						.transform(to: tag)
+				}
+			}
 	}
 
 	func getTag(id: UUID, database: Database) -> EventLoopFuture<SymbolTag> {
@@ -113,22 +142,6 @@ struct SymbolConnectionController {
 		}
 	}
 
-	/// Retrieves existing tag from database if it exists, creating it if it doesnt.
-	func getCreateTag(named value: String, database: Database) -> EventLoopFuture<SymbolTag> {
-		return SymbolTag.query(on: database)
-			.filter(\.$value == value)
-			.first()
-			.flatMap { optTag -> EventLoopFuture<SymbolTag> in
-				if let tag = optTag {
-					return database.eventLoop.future(tag)
-				} else {
-					let tag = SymbolTag(value: value)
-					return tag.create(on: database)
-						.transform(to: tag)
-				}
-			}
-	}
-
 	func connectTag(_ req: Request) throws -> EventLoopFuture<SymbolModel.GetContent> {
 		let user = try req.auth.require(UserModel.self)
 
@@ -138,49 +151,23 @@ struct SymbolConnectionController {
 			throw Abort(.badRequest)
 		}
 
-		let symbol = SymbolModel.query(on: req.db)
-			.filter(\.$id == connectReference.symbolID)
-			.first()
-			.unwrap(or: Abort(.badRequest))
+		let symbol = getSymbol(id: connectReference.symbolID, database: req.db)
 
 		let tag = getCreateTag(named: connectReference.tagValue, database: req.db)
 
-		let connection = getConnectionBetween(symbol: symbol, andTag: tag, database: req.db)
-			.flatMap { optConnection -> EventLoopFuture<SymbolTagConnection> in
-				// this is explicitly to CREATE a connection. if one already exists, abort
-				guard optConnection == nil else {
-					return req.eventLoop.future(error: Abort(.conflict))
-				}
-				//create connection
-				return tag.flatMap { tag -> EventLoopFuture<SymbolTagConnection> in
-					let connection = SymbolTagConnection(tagID: tag.id!,
-														 symbolID: connectReference.symbolID,
-														 createdBy: user.id!)
-					return connection.create(on: req.db)
-						.flatMap { req.eventLoop.future(connection) }
-				}
-			}
+		let userFuture = req.eventLoop.future(user)
+		let connection = createConnectionBetween(symbol: symbol, andTag: tag, createdBy: userFuture, database: req.db)
 
-		return symbol.flatMap { symbolModel -> EventLoopFuture<SymbolModel.GetContent> in
-			return connection.flatMap { _ -> EventLoopFuture<SymbolModel.GetContent> in
-				let loads = symbolModel.$connections.load(on: req.db)
-					.flatMap { _ -> EventLoopFuture<Void> in
-						let tagLoads = symbolModel.connections.map { connection in
-							connection.$tag.load(on: req.db)
-						}
-						return req.eventLoop.flatten(tagLoads)
-					}
-
-				return loads.flatMap { _ in
-					let tags = symbolModel.$connections.value?
-						.map(\.$tag.value?.listContent)
-						.compactMap({ $0 })
-
-					var getContent = symbolModel.getContent
+		return connection.flatMap { _ -> EventLoopFuture<SymbolModel.GetContent> in
+			let test = loadSymbolContent(on: symbol, database: req.db)
+				.map { model -> SymbolModel.GetContent in
+					let tags = model.connections.map(\.tag.listContent)
+					var getContent = model.getContent
 					getContent.tags = tags
-					return req.eventLoop.future(getContent)
+					return getContent
 				}
-			}
+
+			return test
 		}
 	}
 

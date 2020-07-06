@@ -142,6 +142,7 @@ struct SymbolConnectionController {
 		}
 	}
 
+	// MARK: - Request Handling
 	func connectTag(_ req: Request) throws -> EventLoopFuture<SymbolModel.GetContent> {
 		let user = try req.auth.require(UserModel.self)
 

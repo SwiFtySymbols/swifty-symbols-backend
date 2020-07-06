@@ -14,7 +14,6 @@ struct SymbolModule: ViperModule {
 	var migrations: [Migration] {
 		[
 			Symbols_v1_0_0(),
-//			SymbolTestSeed_v1_0_0(),
 			SymbolProductionSeed_v1_0_0(seedLoader: seedLoader),
 		]
 	}

@@ -3,6 +3,9 @@ import Fluent
 import ViperKit
 
 final class UserModel: ViperModel {
+	static let systemUsername = "system"
+	static let superAdminUser = Environment.superAdminUser
+
 	typealias Module = UserModule
 
 	static let name = "users"
@@ -11,6 +14,7 @@ final class UserModel: ViperModel {
 		static var email: FieldKey { "email" }
 		static var password: FieldKey { "password" }
 		static var appleID: FieldKey { "appleid" }
+		static var isAdmin: FieldKey { "isAdmin" }
 	}
 
 	@ID()
@@ -25,6 +29,9 @@ final class UserModel: ViperModel {
 	@Field(key: FieldKeys.appleID)
 	var appleID: String?
 
+	@Field(key: FieldKeys.isAdmin)
+	var isAdmin: Bool
+
 	init() {}
 
 	init(id: UserModel.IDValue? = nil, email: String, password: String, appleID: String? = nil) {
@@ -32,6 +39,7 @@ final class UserModel: ViperModel {
 		self.email = email.lowercased()
 		self.password = password
 		self.appleID = appleID
+		self.isAdmin = false
 	}
 }
 

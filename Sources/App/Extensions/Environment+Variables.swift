@@ -20,4 +20,21 @@ extension Environment {
 		return envVar?.base64Decoded ?? "SIWA_KEY"
 	}()
 
+	static let superAdminUser: String = {
+		guard let value = get("SUPER_ADMIN_USER") else {
+			print("Warning: ENV DIDN'T PROVIDE A SUPER ADMIN USERNAME. `root` used for super admin user!")
+			return "root"
+		}
+		return value
+	}()
+
+	static let superAdminPassword: String = {
+		guard let value = get("SUPER_ADMIN_PASSWORD") else {
+			let fallback = [UInt8].random(count: 24).base64
+			print("Warning: ENV DIDN'T PROVIDE A SUPER ADMIN PASSWORD. `\(fallback)` (no backticks) used for super admin password!")
+			return fallback
+		}
+		return value
+	}()
+
 }

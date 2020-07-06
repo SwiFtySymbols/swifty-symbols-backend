@@ -10,6 +10,7 @@ struct UserMigration_v1_0_0: Migration {
 				.field(UserModel.FieldKeys.email, .string, .required)
 				.field(UserModel.FieldKeys.password, .string, .required)
 				.field(UserModel.FieldKeys.appleID, .string)
+				.field(UserModel.FieldKeys.isAdmin, .bool)
 				.unique(on: UserModel.FieldKeys.email)
 				.unique(on: UserModel.FieldKeys.appleID)
 				.create(),

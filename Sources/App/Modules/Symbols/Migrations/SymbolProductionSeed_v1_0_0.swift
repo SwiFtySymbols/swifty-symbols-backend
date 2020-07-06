@@ -20,6 +20,7 @@ struct SymbolProductionSeed_v1_0_0: Migration {
 		let symbolSeeds = try! seedLoader()
 
 		let user = UserModel.query(on: database)
+			.filter(\.$email == UserModel.systemUsername)
 			.first()
 			.unwrap(or: Abort(.badRequest))
 

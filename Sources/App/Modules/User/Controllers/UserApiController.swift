@@ -6,6 +6,10 @@ struct UserApiController {
 	func signUp(req: Request) throws -> EventLoopFuture<Response> {
 		let user = try req.content.decode(UserModel.CreateContext.self)
 
+		guard user.password == user.passwordVerify else {
+			throw Abort(.badRequest, reason: "Passwords didn't match! C'mon. You should be checking this on the client side ffs.")
+		}
+
 		let hashedPassword = try Bcrypt.hash(user.password)
 		let userModel = UserModel(email: user.email, password: hashedPassword)
 

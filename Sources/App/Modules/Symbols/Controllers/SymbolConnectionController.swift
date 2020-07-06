@@ -160,15 +160,8 @@ struct SymbolConnectionController {
 		let connection = createConnectionBetween(symbol: symbol, andTag: tag, createdBy: userFuture, database: req.db)
 
 		return connection.flatMap { _ -> EventLoopFuture<SymbolModel.GetContent> in
-			let test = self.loadSymbolContent(on: symbol, database: req.db)
-				.map { model -> SymbolModel.GetContent in
-					let tags = model.connections.map(\.tag.listContent)
-					var getContent = model.getContent
-					getContent.tags = tags
-					return getContent
-				}
-
-			return test
+			self.loadSymbolContent(on: symbol, database: req.db)
+				.map(\.getContent)
 		}
 	}
 
@@ -226,7 +219,12 @@ struct SymbolConnectionController {
 		return scores.map { scores -> [SFSymbolResultObject] in
 			var results: [SFSymbolResultObject] = []
 			for (symbol, score) in scores {
-				let result = SFSymbolResultObject(id: symbol.id!, value: symbol.name, availability: symbol.availability, resultScore: score)
+				let result = SFSymbolResultObject(id: symbol.id!,
+												  value: symbol.name,
+												  availability: symbol.availability,
+												  localizations: symbol.localizationOptions,
+												  deprecatedNames: symbol.deprecatedNames,
+												  resultScore: score)
 				results.append(result)
 			}
 			return results.sorted { $0.resultScore > $1.resultScore }

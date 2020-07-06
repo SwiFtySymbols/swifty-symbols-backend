@@ -62,7 +62,11 @@ extension SymbolModel: Hashable {
 
 extension SymbolModel: ListContentRepresentable {
 	var listContent: ListItem {
-		.init(id: id!, value: name, availability: availability)
+		.init(id: id!,
+			  value: name,
+			  localizations: localizationOptions,
+			  deprecatedNames: deprecatedNames.isEmpty ? nil : deprecatedNames,
+			  availability: availability)
 	}
 
 	typealias ListItem = SFSymbolListObject
@@ -72,7 +76,16 @@ extension SymbolModel: GetContentRepresentable {
 	typealias GetContent = SFSymbolGetObject
 
 	var getContent: SFSymbolGetObject {
-		.init(id: id!, value: name, availability: availability)
+		let tags = $connections.value?
+			.map(\.$tag.value?.listContent)
+			.compactMap({ $0 })
+
+		return .init(id: id!,
+			  value: name,
+			  availability: availability,
+			  localizations: localizationOptions,
+			  deprecatedNames: deprecatedNames,
+			  tags: tags ?? [])
 	}
 }
 

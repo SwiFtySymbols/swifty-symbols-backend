@@ -18,13 +18,6 @@ struct SymbolModelApiController: ListContentController, GetContentController {
 			}
 			.first()
 			.unwrap(or: Abort(.badRequest))
-			.map({ model in
-				let tags = model.$connections.value?
-					.map(\.$tag.value?.listContent)
-					.compactMap({ $0 })
-				var getContent = model.getContent
-				getContent.tags = tags
-				return getContent
-			})
+			.map(\.getContent)
 	}
 }

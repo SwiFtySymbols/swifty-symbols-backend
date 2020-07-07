@@ -23,10 +23,11 @@ public func configure(_ app: Application) throws {
 
 	let modules: [ViperModule] = [
 		UserModule(),
-		SymbolModule(seedLoader: {
+		SymbolModule(),
+		UtilityModule(seedLoader: {
 			let data = try Data(contentsOf: symbolJsonSource)
-			return try JSONDecoder().decode([SymbolProductionSeed_v1_0_0.SymbolSeedValue].self, from: data)
-		}),
+			return try JSONDecoder().decode([UtilitySeedDatabase.SymbolSeedValue].self, from: data)
+		})
 	]
 
 	try app.viper.use(modules)

@@ -1,6 +1,5 @@
 import Vapor
 
-
 struct UtilityCommandGroup: CommandGroup {
 	let commands: [String: AnyCommand]
 	let help: String

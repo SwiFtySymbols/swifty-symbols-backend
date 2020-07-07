@@ -5,7 +5,6 @@ import ViperKit
 struct SymbolModule: ViperModule {
 	static var name = "symbol"
 
-
 	var router: ViperRouter? {
 		SymbolRouter()
 	}

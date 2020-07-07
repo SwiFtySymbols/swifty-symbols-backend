@@ -42,32 +42,62 @@ final class UtilitySeedDatabase: Command {
 			.first()
 			.unwrap(or: Abort(.badRequest))
 
-		let futures: [EventLoopFuture<Void>] = symbolSeeds.map { importSymbol in
-			let symbol = connectionController.createSymbol(named: importSymbol.name,
-														   restriction: nil,
-														   availability: importSymbol.sfVersionAvailability,
-														   deprecatedNames: importSymbol.deprecatedNames,
-														   localizationOptions: importSymbol.localizations,
-														   database: database)
+		let createSymbols = symbolSeeds.map { importSymbol -> EventLoopFuture<SymbolModel> in
+			connectionController.createSymbol(named: importSymbol.name,
+											  restriction: nil,
+											  availability: importSymbol.sfVersionAvailability,
+											  deprecatedNames: importSymbol.deprecatedNames,
+											  localizationOptions: importSymbol.localizations,
+											  database: database)
+		}
 
+		let flattenSymbols = database.eventLoop.flatten(createSymbols)
+		_ = try flattenSymbols.wait()
+
+		let createTags = symbolSeeds.map { importSymbol -> EventLoopFuture<[SymbolTag]> in
 			let depTags = importSymbol.deprecatedNames.map {
 				connectionController.createTag(withValue: $0, database: database)
 			}
 			let baseTag = connectionController.createTag(withValue: importSymbol.name, database: database)
 
 			let allTags = depTags + [baseTag]
-
-			let connFutures = allTags.map { connectionController.createConnectionBetween(symbol: symbol, andTag: $0, createdBy: user, database: database) }
-
-			let flat = database.eventLoop.flatten(connFutures)
-
-			return flat.flatMapAlways { _ -> EventLoopFuture<Void> in
-				return database.eventLoop.future()
-			}
+			return database.eventLoop.flatten(allTags)
 		}
 
-		let allFutures = database.eventLoop.flatten(futures)
+		let flattenedTags = database.eventLoop.flatten(createTags)
+		_ = try flattenedTags.wait()
 
-		try allFutures.wait()
+
+		let createConnections = symbolSeeds.map { importSymbol -> EventLoopFuture<[SymbolTagConnection]> in
+			let symbol = connectionController.getSymbol(named: importSymbol.name, database: database)
+				.flatMap { optModel -> EventLoopFuture<SymbolModel> in
+					guard let model = optModel else {
+						return database.eventLoop.future(error: Abort(.badRequest, reason: "Requested symbol doesn't exist"))
+					}
+					return database.eventLoop.future(model)
+				}
+
+			let tagStrings = Set(importSymbol.deprecatedNames + [importSymbol.name])
+			let tags = tagStrings.map { connectionController.getTag(withValue: $0, database: database) }
+			let flattenedTags = database.eventLoop.flatten(tags).flatMap { optTags -> EventLoopFuture<[SymbolTag]> in
+				database.eventLoop.future(optTags.compactMap { $0 })
+			}
+
+			let connections = flattenedTags.flatMap { (tags: [SymbolTag]) -> EventLoopFuture<[SymbolTagConnection]> in
+				let test = tags.map { tag -> EventLoopFuture<SymbolTagConnection> in
+					let tagFuture = database.eventLoop.future(tag)
+					return self.connectionController.createConnectionBetween(symbol: symbol,
+																			 andTag: tagFuture,
+																			 createdBy: user,
+																			 expiration: nil,
+																			 database: database)
+				}
+				return database.eventLoop.flatten(test)
+			}
+			return connections
+		}
+
+		let allConnections = database.eventLoop.flatten(createConnections)
+		_ = try allConnections.wait()
 	}
 }

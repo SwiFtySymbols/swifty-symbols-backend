@@ -190,9 +190,7 @@ struct SymbolConnectionController {
 
 			let tagMatch = SymbolTag.query(on: req.db)
 				.filter(\.$value ~~ searchTerm)
-				.with(\.$connections) { connection in
-					connection.with(\.$symbol)
-				}
+				.with(\.$symbols)
 				.limit(256)
 				.all()
 
@@ -201,8 +199,7 @@ struct SymbolConnectionController {
 					var newCombined = combinedDict
 					for tag in tags {
 						let score = termCount / Double(tag.value.count)
-						let symbols = tag.connections.map(\.symbol)
-						for symbol in symbols {
+						for symbol in tag.symbols {
 							newCombined[symbol, default: 0] += score
 						}
 					}

@@ -13,9 +13,7 @@ struct SymbolModelApiController: ListContentController, GetContentController {
 	func get(_ symbolID: UUID, on req: Request) throws -> EventLoopFuture<Model.GetContent> {
 		return SymbolModel.query(on: req.db)
 			.filter(\.$id == symbolID)
-			.with(\.$connections) { connection in
-				connection.with(\.$tag)
-			}
+			.with(\.$tags)
 			.first()
 			.unwrap(or: Abort(.badRequest))
 			.map(\.getContent)

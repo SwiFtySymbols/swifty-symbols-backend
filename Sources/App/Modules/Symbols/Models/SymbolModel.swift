@@ -23,6 +23,9 @@ final class SymbolModel: ViperModel {
 	@Children(for: \.$symbol)
 	var connections: [SymbolTagConnection]
 
+	@Siblings(through: SymbolTagConnection.self, from: \.$symbol, to: \.$tag)
+	var tags: [SymbolTag]
+
 	@Field(key: FieldKeys.name)
 	var name: String
 
@@ -76,9 +79,8 @@ extension SymbolModel: GetContentRepresentable {
 	typealias GetContent = SFSymbolGetObject
 
 	var getContent: SFSymbolGetObject {
-		let tags = $connections.value?
-			.map(\.$tag.value?.listContent)
-			.compactMap({ $0 })
+		let tags = $tags.value?
+			.map(\.listContent)
 
 		return .init(id: id!,
 			  value: name,

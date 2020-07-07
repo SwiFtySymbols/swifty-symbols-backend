@@ -31,6 +31,7 @@ struct Symbols_v1_0_0: Migration {
 			.foreignKey(SymbolTagConnection.FieldKeys.symbolID, references: SymbolModel.schema, .id)
 			.field(SymbolTagConnection.FieldKeys.createdByID, .uuid, .required)
 			.foreignKey(SymbolTagConnection.FieldKeys.createdByID, references: UserModel.schema, .id)
+			.unique(on: SymbolTagConnection.FieldKeys.tagID, SymbolTagConnection.FieldKeys.symbolID)
 			.create()
 		])
 	}

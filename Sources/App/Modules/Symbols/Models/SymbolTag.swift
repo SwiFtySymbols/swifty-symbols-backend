@@ -23,6 +23,8 @@ final class SymbolTag: ViperModel {
 	@Children(for: \.$tag)
 	var connections: [SymbolTagConnection]
 
+	@Siblings(through: SymbolTagConnection.self, from: \.$tag, to: \.$symbol)
+	var symbols: [SymbolModel]
 
 	init() {}
 
@@ -44,10 +46,14 @@ extension SymbolTag: GetContentRepresentable {
 	typealias GetContent = SFSymbolTagGetObject
 
 	var getContent: SFSymbolTagGetObject {
-		let symbols = connections
-			.map(\.symbol)
+		let symbols = $symbols.value?
 			.map(\.listContent)
-		return .init(id: id!, value: value, symbols: symbols)
+		
+		if symbols == nil {
+			print("Attempted fetching SymbolTag sibling without loading first.")
+		}
+
+		return .init(id: id!, value: value, symbols: symbols ?? [])
 	}
 }
 

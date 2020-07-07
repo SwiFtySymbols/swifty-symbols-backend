@@ -48,7 +48,8 @@ final class UtilitySeedDatabase: Command {
 											  availability: importSymbol.sfVersionAvailability,
 											  deprecatedNames: importSymbol.deprecatedNames,
 											  localizationOptions: importSymbol.localizations,
-											  database: database)
+											  database: database,
+											  failGracefully: true)
 		}
 
 		let flattenSymbols = database.eventLoop.flatten(createSymbols)
@@ -56,9 +57,9 @@ final class UtilitySeedDatabase: Command {
 
 		let createTags = symbolSeeds.map { importSymbol -> EventLoopFuture<[SymbolTag]> in
 			let depTags = importSymbol.deprecatedNames.map {
-				connectionController.createTag(withValue: $0, database: database)
+				connectionController.createTag(withValue: $0, database: database, failGracefully: true)
 			}
-			let baseTag = connectionController.createTag(withValue: importSymbol.name, database: database)
+			let baseTag = connectionController.createTag(withValue: importSymbol.name, database: database, failGracefully: true)
 
 			let allTags = depTags + [baseTag]
 			return database.eventLoop.flatten(allTags)
@@ -90,7 +91,8 @@ final class UtilitySeedDatabase: Command {
 																			 andTag: tagFuture,
 																			 createdBy: user,
 																			 expiration: nil,
-																			 database: database)
+																			 database: database,
+																			 failGracefully: true)
 				}
 				return database.eventLoop.flatten(test)
 			}

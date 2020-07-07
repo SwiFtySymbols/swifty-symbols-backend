@@ -11,13 +11,16 @@ struct SymbolConnectionController {
 					  availability: SFVersionAvailability,
 					  deprecatedNames: [String],
 					  localizationOptions: [SFSymbolLocalizationOptions],
-					  database: Database) -> EventLoopFuture<SymbolModel> {
+					  database: Database,
+					  failGracefully: Bool = false) -> EventLoopFuture<SymbolModel> {
 
 		let existingSymbol = getSymbol(named: name, database: database)
 
 		return existingSymbol.flatMap { optModel -> EventLoopFuture<SymbolModel> in
-			guard optModel == nil else {
-				return database.eventLoop.future(error: Abort(.badRequest, reason: "A Symbol with that name already exists."))
+			if let model = optModel {
+				return failGracefully ?
+					database.eventLoop.future(model) :
+					database.eventLoop.future(error: Abort(.badRequest, reason: "A Symbol with that name already exists."))
 			}
 			let symbol = SymbolModel(name: name,
 									 restriction: restriction,
@@ -59,12 +62,15 @@ struct SymbolConnectionController {
 	}
 
 	// MARK: - Tags
-	func createTag(withValue value: String, database: Database) -> EventLoopFuture<SymbolTag> {
+	func createTag(withValue value: String, database: Database, failGracefully: Bool = false) -> EventLoopFuture<SymbolTag> {
 		let existingTag = getTag(withValue: value, database: database)
 		return existingTag.flatMap { optTag -> EventLoopFuture<SymbolTag> in
-			guard optTag == nil else {
-				return database.eventLoop.future(error: Abort(.badRequest, reason: "A Tag with that value already exists."))
+			if let tag = optTag {
+				return failGracefully ?
+					database.eventLoop.future(tag) :
+					database.eventLoop.future(error: Abort(.badRequest, reason: "A Tag with that value already exists."))
 			}
+
 			let tag = SymbolTag(value: value)
 			return tag.create(on: database)
 				.transform(to: tag)
@@ -99,14 +105,21 @@ struct SymbolConnectionController {
 	}
 
 	// MARK: - Connections
-	func createConnectionBetween(symbolID: UUID, andTagID tagID: UUID, createdByID: UUID, expiration: Date? = nil, on database: Database) -> EventLoopFuture<SymbolTagConnection> {
+	func createConnectionBetween(symbolID: UUID,
+								 andTagID tagID: UUID,
+								 createdByID: UUID,
+								 expiration: Date? = nil,
+								 on database: Database,
+								 failGracefully: Bool = false) -> EventLoopFuture<SymbolTagConnection> {
 		let checkIfSymbolExists = getSymbol(id: symbolID, database: database)
 		return checkIfSymbolExists.flatMap { _ -> EventLoopFuture<SymbolTagConnection> in
 			return self.getTag(id: tagID, database: database).flatMap { _ -> EventLoopFuture<SymbolTagConnection> in
 				let checkExisting = self.getConnectionBetween(symbolID: symbolID, andTagID: tagID, database: database)
 				return checkExisting.flatMap { optConnection -> EventLoopFuture<SymbolTagConnection> in
-					guard optConnection == nil else {
-						return database.eventLoop.future(error: Abort(.badRequest, reason: "Connection already exists. Use existing connection."))
+					if let connection = optConnection {
+						return failGracefully ?
+							database.eventLoop.future(connection) :
+							database.eventLoop.future(error: Abort(.badRequest, reason: "Connection already exists. Use existing connection."))
 					}
 
 					let connection = SymbolTagConnection(tagID: tagID, symbolID: symbolID, createdBy: createdByID, expiration: expiration)
@@ -117,11 +130,21 @@ struct SymbolConnectionController {
 		}
 	}
 
-	func createConnectionBetween(symbol: EventLoopFuture<SymbolModel>, andTag tag: EventLoopFuture<SymbolTag>, createdBy creator: EventLoopFuture<UserModel>, expiration: Date? = nil, database: Database) -> EventLoopFuture<SymbolTagConnection> {
+	func createConnectionBetween(symbol: EventLoopFuture<SymbolModel>,
+								 andTag tag: EventLoopFuture<SymbolTag>,
+								 createdBy creator: EventLoopFuture<UserModel>,
+								 expiration: Date? = nil,
+								 database: Database,
+								 failGracefully: Bool = false) -> EventLoopFuture<SymbolTagConnection> {
 		creator.flatMap { creator in
 			symbol.flatMap { symbolModel in
 				tag.flatMap { tagModel in
-					self.createConnectionBetween(symbolID: symbolModel.id!, andTagID: tagModel.id!, createdByID: creator.id!, expiration: expiration, on: database)
+					self.createConnectionBetween(symbolID: symbolModel.id!,
+												 andTagID: tagModel.id!,
+												 createdByID: creator.id!,
+												 expiration: expiration,
+												 on: database,
+												 failGracefully: failGracefully)
 				}
 			}
 		}

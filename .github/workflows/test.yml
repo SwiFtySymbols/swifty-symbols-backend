@@ -15,7 +15,7 @@ jobs:
 
   test_on_ubuntu_xenial:
     container:
-      image: vapor/swift:5.2.4-xenial
+      image: vapor/swift:5.2.2-xenial-ci
     runs-on: ubuntu-latest
     steps:
     - run: apt update -y; apt install -y libsqlite3-dev

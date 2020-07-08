@@ -52,10 +52,9 @@ struct SymbolConnectionController {
 				.$connections
 				.load(on: database)
 				.flatMap { _ -> EventLoopFuture<Void> in
-					let tagLoads = symbolModel.connections.map { connection in
-						connection.$tag.load(on: database)
-					}
-					return database.eventLoop.flatten(tagLoads)
+					return symbolModel
+						.$tags
+						.load(on: database)
 				}
 				.transform(to: symbolModel)
 		}
@@ -166,7 +165,7 @@ struct SymbolConnectionController {
 	}
 
 	// MARK: - Request Handling
-	func connectTag(_ req: Request) throws -> EventLoopFuture<SymbolModel.GetContent> {
+	func connectTag(_ req: Request) throws -> EventLoopFuture<Response> {
 		let user = try req.auth.require(UserModel.self)
 
 		let connectReference = try req.content.decode(SFTagSymbolRequest.self)
@@ -186,6 +185,7 @@ struct SymbolConnectionController {
 			self.loadSymbolContent(on: symbol, database: req.db)
 				.map(\.getContent)
 		}
+		.encodeResponse(status: .created, for: req)
 	}
 
 	func search(_ req: Request) throws -> EventLoopFuture<[SFSymbolResultObject]> {

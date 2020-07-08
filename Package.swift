@@ -16,10 +16,12 @@ let package = Package(
 		.package(url: "https://github.com/vapor/vapor.git", from: "4.5.0"),
 		.package(url: "https://github.com/vapor/fluent.git", from: "4.0.0-rc"),
 		.package(url: "https://github.com/vapor/fluent-postgres-driver", from: "2.0.0-rc"),
+		.package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0-rc"),
 		.package(url: "https://github.com/vapor/jwt.git", from: "4.0.0-rc"),
 
 		.package(url: "https://github.com/binarybirds/content-api.git", from: "1.0.0"),
 		.package(url: "https://github.com/binarybirds/viper-kit.git", from: "1.0.0"),
+		.package(url: "https://github.com/binarybirds/spec.git", from: "1.0.0"),
 
 
 		// use this when committing
@@ -52,7 +54,8 @@ let package = Package(
 		]),
 		.testTarget(name: "AppTests", dependencies: [
 			.target(name: "App"),
-			.product(name: "XCTVapor", package: "vapor"),
+			.product(name: "Spec", package: "spec"),
+			.product(name: "FluentSQLiteDriver", package: "fluent-sqlite-driver"),
 		])
 	]
 )

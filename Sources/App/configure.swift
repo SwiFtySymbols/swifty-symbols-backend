@@ -32,6 +32,7 @@ public func configure(_ app: Application) throws {
 
 	try app.viper.use(modules)
 
+	guard app.environment != .testing else { return }
 	print("migrating...")
 	try app.autoMigrate().wait()
 }

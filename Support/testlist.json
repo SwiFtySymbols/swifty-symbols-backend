@@ -1,0 +1,135 @@
+[
+  {
+    "deprecatedNames" : [
+      "square.on.circle.fill"
+    ],
+    "localizations" : [],
+    "name" : "square.fill.on.circle.fill",
+    "sfVersionAvailability" : 1
+  },
+  {
+    "deprecatedNames" : [],
+    "localizations" : [],
+    "name" : "arrow.up.left.and.arrow.down.right.circle.fill",
+    "sfVersionAvailability" : 2
+  },
+  {
+    "deprecatedNames" : [
+      "arrow.2.circlepath.circle"
+    ],
+    "localizations" : [],
+    "name" : "arrow.triangle.2.circlepath.circle",
+    "sfVersionAvailability" : 2
+  },
+  {
+    "deprecatedNames" : [],
+    "localizations" : [],
+    "name" : "arrow.left.circle.fill",
+    "sfVersionAvailability" : 1
+  },
+  {
+    "deprecatedNames" : [],
+    "localizations" : [],
+    "name" : "minus.diamond.fill",
+    "sfVersionAvailability" : 2
+  },
+  {
+    "deprecatedNames" : [],
+    "localizations" : [],
+    "name" : "headphones.circle.fill",
+    "sfVersionAvailability" : 2
+  },
+  {
+    "deprecatedNames" : [],
+    "localizations" : [],
+    "name" : "location.circle",
+    "sfVersionAvailability" : 1
+  },
+  {
+    "deprecatedNames" : [],
+    "localizations" : [
+      "hi",
+      "ar"
+    ],
+    "name" : "goforward.15",
+    "sfVersionAvailability" : 1
+  },
+  {
+    "deprecatedNames" : [],
+    "localizations" : [],
+    "name" : "location.north.line.fill",
+    "sfVersionAvailability" : 1
+  },
+  {
+    "deprecatedNames" : [],
+    "localizations" : [],
+    "name" : "lock.slash.fill",
+    "sfVersionAvailability" : 1
+  },
+  {
+    "deprecatedNames" : [],
+    "localizations" : [],
+    "name" : "33.square.fill",
+    "sfVersionAvailability" : 1
+  },
+  {
+    "deprecatedNames" : [],
+    "localizations" : [],
+    "name" : "39.circle",
+    "sfVersionAvailability" : 1
+  },
+  {
+    "deprecatedNames" : [],
+    "localizations" : [],
+    "name" : "9.alt.circle.fill",
+    "sfVersionAvailability" : 1
+  },
+  {
+    "deprecatedNames" : [],
+    "localizations" : [],
+    "name" : "app.fill",
+    "sfVersionAvailability" : 1
+  },
+  {
+    "deprecatedNames" : [],
+    "localizations" : [],
+    "name" : "lock.icloud",
+    "sfVersionAvailability" : 1
+  },
+  {
+    "deprecatedNames" : [],
+    "localizations" : [],
+    "name" : "arrowtriangle.up",
+    "sfVersionAvailability" : 1
+  },
+  {
+    "deprecatedNames" : [],
+    "localizations" : [],
+    "name" : "link.circle",
+    "sfVersionAvailability" : 1
+  },
+  {
+    "deprecatedNames" : [],
+    "localizations" : [],
+    "name" : "cylinder.split.1x2",
+    "sfVersionAvailability" : 2
+  },
+  {
+    "deprecatedNames" : [],
+    "localizations" : [],
+    "name" : "arrowshape.turn.up.right.circle",
+    "sfVersionAvailability" : 1
+  },
+  {
+    "deprecatedNames" : [],
+    "localizations" : [],
+    "name" : "face.dashed",
+    "sfVersionAvailability" : 2
+  },
+  {
+    "deprecatedNames" : [],
+    "localizations" : [],
+    "name" : "arrowtriangle.right.circle",
+    "sfVersionAvailability" : 1
+  }
+]

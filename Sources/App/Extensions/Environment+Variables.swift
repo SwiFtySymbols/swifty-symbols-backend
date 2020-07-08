@@ -2,12 +2,9 @@ import Vapor
 
 extension Environment {
 
-	static let databaseURL: String = {
-		guard let value = get("DATABASE_URL") else {
-			print("Warning: No database URL set, using 'DATABASE_URL'")
-			return "DATABASE_URL"
-		}
-		return value
+	static let databaseURL: URL? = {
+		guard let urlString = get("DATABASE_URL") else { return nil }
+		return URL(string: urlString)
 	}()
 
 	static let siwaID = get("SIWA_ID") ?? "SIWA_ID"

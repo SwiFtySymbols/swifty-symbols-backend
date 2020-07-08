@@ -9,7 +9,11 @@ public func configure(_ app: Application) throws {
 	// app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
 
 	print("starting...")
-	try app.databases.use(.postgres(url: Environment.databaseURL), as: .psql)
+	if let dbURL = Environment.databaseURL {
+		try app.databases.use(.postgres(url: dbURL), as: .psql)
+	} else {
+		print("WARNING: NO DB URL PROVIDED.")
+	}
 
 	// Configure SQLite database
 //	app.databases.use(.sqlite(.file("db.sqlite")), as: .sqlite)

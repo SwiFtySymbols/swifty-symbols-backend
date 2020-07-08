@@ -27,7 +27,7 @@ COPY --from=build --chown=vapor:vapor /build/.build/release /app
 COPY --from=build --chown=vapor:vapor /build/Support /app/Support
 
 COPY .env /app
-COPY .env /app/.env.production
+# COPY .env /app/.env.production
 
 USER vapor
 ENTRYPOINT ["./Run"]

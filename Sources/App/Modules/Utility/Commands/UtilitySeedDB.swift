@@ -2,6 +2,19 @@ import Vapor
 import Fluent
 import SwiFtySymbolsShared
 
+fileprivate class RefValue<T> {
+	private let theQueue = DispatchQueue(label: "theQueue")
+	private var _value: T
+	var value: T {
+		get { theQueue.sync { _value } }
+		set { theQueue.sync { _value = newValue } }
+	}
+
+	init(value: T) {
+		self._value = value
+	}
+}
+
 final class UtilitySeedDatabase: Command {
 
 	static let name = "seed-db"
@@ -32,20 +45,30 @@ final class UtilitySeedDatabase: Command {
 		let loadingBar = context.console.progressBar(title: "Progress")
 		loadingBar.start()
 
+		try seedDB(database) { progressValue in
+			loadingBar.activity.currentProgress = progressValue
+		} titleProgressUpdater: { newTitle in
+			loadingBar.activity.title = newTitle
+		}
+	}
+
+	func seedDB(_ database: Database, progressUpdater: ((Double) -> Void)? = nil, titleProgressUpdater: ((String) -> Void)? = nil) throws {
 		let symbolSeeds = try seedLoader()
 		// there are 5 distinct sections: symbol creation, tag creation, symbol fetching, tag fetching, connection creation
 		let totalActions = Double(symbolSeeds.count * 5)
-
-		func updateProgress<T>(_ ignored: T) {
-			loadingBar.activity.currentProgress += 1 / totalActions
-		}
+		let progressTracker = RefValue(value: Double(0))
 
 		let user = UserModel.query(on: database)
 			.filter(\.$email == UserModel.systemUsername)
 			.first()
 			.unwrap(or: Abort(.badRequest))
 
-		loadingBar.activity.title = "Creating Symbols"
+		func progressUpdate<T>(_ ignored: T) {
+			progressTracker.value += 1 / totalActions
+			progressUpdater?(progressTracker.value)
+		}
+
+		titleProgressUpdater?("Creating Symbols")
 		let createSymbols = symbolSeeds.map { importSymbol -> EventLoopFuture<SymbolModel> in
 			connectionController.createSymbol(named: importSymbol.name,
 											  restriction: nil,
@@ -54,13 +77,13 @@ final class UtilitySeedDatabase: Command {
 											  localizationOptions: importSymbol.localizations,
 											  database: database,
 											  failGracefully: true)
-				.always(updateProgress)
+				.always(progressUpdate)
 		}
 
 		let flattenSymbols = database.eventLoop.flatten(createSymbols)
 		_ = try flattenSymbols.wait()
 
-		loadingBar.activity.title = "Creating Tags"
+		titleProgressUpdater?("Creating Tags")
 		let createTags = symbolSeeds.map { importSymbol -> EventLoopFuture<[SymbolTag]> in
 			let depTags = importSymbol.deprecatedNames.map {
 				connectionController.createTag(withValue: $0, database: database, failGracefully: true)
@@ -69,14 +92,14 @@ final class UtilitySeedDatabase: Command {
 
 			let allTags = depTags + [baseTag]
 			return database.eventLoop.flatten(allTags)
-				.always(updateProgress)
+				.always(progressUpdate)
 		}
 
 		let flattenedTags = database.eventLoop.flatten(createTags)
 		_ = try flattenedTags.wait()
 
 
-		loadingBar.activity.title = "Creating Connections"
+		titleProgressUpdater?("Creating Connections")
 		let createConnections = symbolSeeds.map { importSymbol -> EventLoopFuture<[SymbolTagConnection]> in
 			let symbol = connectionController.getSymbol(named: importSymbol.name, database: database)
 				.flatMap { optModel -> EventLoopFuture<SymbolModel> in
@@ -84,14 +107,14 @@ final class UtilitySeedDatabase: Command {
 						return database.eventLoop.future(error: Abort(.badRequest, reason: "Requested symbol doesn't exist"))
 					}
 					return database.eventLoop.future(model)
-						.always(updateProgress)
+						.always(progressUpdate)
 				}
 
 			let tagStrings = Set(importSymbol.deprecatedNames + [importSymbol.name])
 			let tags = tagStrings.map { connectionController.getTag(withValue: $0, database: database) }
 			let flattenedTags = database.eventLoop.flatten(tags).flatMap { optTags -> EventLoopFuture<[SymbolTag]> in
 				database.eventLoop.future(optTags.compactMap { $0 })
-					.always(updateProgress)
+					.always(progressUpdate)
 			}
 
 			let connections = flattenedTags.flatMap { (tags: [SymbolTag]) -> EventLoopFuture<[SymbolTagConnection]> in
@@ -103,7 +126,7 @@ final class UtilitySeedDatabase: Command {
 																			 expiration: nil,
 																			 database: database,
 																			 failGracefully: true)
-						.always(updateProgress)
+						.always(progressUpdate)
 				}
 				return database.eventLoop.flatten(test)
 			}

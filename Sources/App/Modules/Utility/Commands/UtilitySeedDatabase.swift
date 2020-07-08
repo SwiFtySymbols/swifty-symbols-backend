@@ -45,11 +45,12 @@ final class UtilitySeedDatabase: Command {
 		let loadingBar = context.console.progressBar(title: "Progress")
 		loadingBar.start()
 
-		try seedDB(database) { progressValue in
-			loadingBar.activity.currentProgress = progressValue
-		} titleProgressUpdater: { newTitle in
-			loadingBar.activity.title = newTitle
-		}
+		try seedDB(database,
+			   progressUpdater: { progressValue in
+				loadingBar.activity.currentProgress = progressValue
+			   }, titleProgressUpdater: { newTitle in
+				loadingBar.activity.title = newTitle
+			})
 	}
 
 	func seedDB(_ database: Database, progressUpdater: ((Double) -> Void)? = nil, titleProgressUpdater: ((String) -> Void)? = nil) throws {

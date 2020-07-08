@@ -7,7 +7,6 @@ final class SymbolApiTests: AppTestCase {
 
 	func testListSymbols() throws {
 		let app = try createTestApp()
-//		let token = try getAPIToken(app)
 		defer { app.shutdown() }
 
 		let sourceSymbols = try getSourceTestSymbols(for: app)

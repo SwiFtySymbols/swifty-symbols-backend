@@ -36,22 +36,24 @@ open class AppTestCase: XCTestCase {
 
 		let userLogin = UserLoginContext(email: email, password: password)
 
-		try app.test(.POST, "/api/user/signup", beforeRequest: { request in
-			try request.content.encode(userCreate)
-		}, afterResponse: { response in
-			XCTAssertEqual(response.status, .created)
-		})
-
+		try app
+			.describe("Creating an account should respond `created`")
+			.post("/api/user/signup")
+			.body(userCreate)
+			.expect(.created)
+			.test()
 
 		var token: String?
 
-		try app.test(.POST, "/api/user/login", beforeRequest: { request in
-			try request.content.encode(userLogin)
-		}, afterResponse: { response in
-			XCTAssertContent(UserTokenResponse.self, response) { content in
-				token = content.value
+		try app
+			.describe("Logging into an account should respond with a token.")
+			.post("/api/user/login")
+			.body(userLogin)
+			.expect(.ok)
+			.expect(UserTokenResponse.self) { tokenResponse in
+				token = tokenResponse.value
 			}
-		})
+			.test()
 
 		guard let unwrapped = token else {
 			XCTFail("Login failed")

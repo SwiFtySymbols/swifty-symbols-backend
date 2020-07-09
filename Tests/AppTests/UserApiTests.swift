@@ -38,6 +38,29 @@ final class UserApiTests: AppTestCase {
 			.test()
 	}
 
+	func testUserCreationDuplicate() throws {
+		let app = try createTestApp()
+		defer { app.shutdown() }
+
+		let email = "he@ho.hum"
+		let password = "Abc123!"
+		let userCreate = UserCreateContext(email: email, password: password, passwordVerify: password)
+
+		try app
+			.describe("Passwords should be validated to match.")
+			.post("/api/user/signup")
+			.body(userCreate)
+			.expect(.created)
+			.test()
+
+		try app
+			.describe("A new account should not be created.")
+			.post("/api/user/signup")
+			.body(userCreate)
+			.expect(.internalServerError)
+			.test()
+	}
+
 	// MARK: - login
 
 	func testUserLogin() throws {

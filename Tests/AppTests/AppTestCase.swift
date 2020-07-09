@@ -71,6 +71,7 @@ open class AppTestCase: XCTestCase {
 		let data = try Data(contentsOf: testSymbolJsonSource)
 		return try JSONDecoder().decode([UtilitySeedDatabase.SymbolSeedValue].self, from: data)
 	}
+
 }
 
 extension UserLoginContext: Content {}
